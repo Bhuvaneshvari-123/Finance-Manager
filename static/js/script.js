@@ -1,0 +1,92 @@
+let balance = 0;
+let transactions = [];
+
+function updateBalance() {
+    document.getElementById('balance').textContent = `₹${balance.toFixed(2)}`;
+}
+
+function saveTransactions() {
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+
+function loadTransactions() {
+    const savedTransactions = localStorage.getItem('transactions');
+    if (savedTransactions) {
+        transactions = JSON.parse(savedTransactions);
+        transactions.forEach(transaction => {
+            if (transaction.type === 'income') {
+                balance += transaction.amount;
+            } else if (transaction.type === 'expense') {
+                balance -= transaction.amount;
+            }
+        });
+    }
+}
+
+function addIncome() {
+    const incomeModal = document.getElementById('income-modal');
+    incomeModal.style.display = 'block';
+}
+
+function submitIncome() {
+    const incomeAmount = parseFloat(document.getElementById('income-amount').value);
+    if (!isNaN(incomeAmount) && incomeAmount > 0) {
+        balance += incomeAmount;
+        transactions.push({ type: 'income', amount: incomeAmount });
+        updateBalance();
+        displayTransactions();
+        saveTransactions();
+        closeModal('income-modal');
+    }
+}
+
+function recordExpense() {
+    const expenseModal = document.getElementById('expense-modal');
+    expenseModal.style.display = 'block';
+}
+
+function submitExpense() {
+    const expenseAmount = parseFloat(document.getElementById('expense-amount').value);
+    const expenseCategory = document.getElementById('expense-category').value;
+    if (!isNaN(expenseAmount) && expenseAmount > 0 && expenseCategory) {
+        balance -= expenseAmount;
+        transactions.push({ type: 'expense', amount: expenseAmount, category: expenseCategory });
+        updateBalance();
+        displayTransactions();
+        saveTransactions();
+        closeModal('expense-modal');
+    }
+}
+
+function deleteTransaction(index) {
+    const transaction = transactions[index];
+    if (transaction.type === 'income') {
+        balance -= transaction.amount;
+    } else if (transaction.type === 'expense') {
+        balance += transaction.amount;
+    }
+    transactions.splice(index, 1);
+    updateBalance();
+    displayTransactions();
+    saveTransactions();
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function displayTransactions() {
+    const transactionsList = document.getElementById('transactions-list');
+    transactionsList.innerHTML = '';
+    transactions.forEach((transaction, index) => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `${transaction.type === 'income' ? 'Income' : 'Expense'}: ₹${transaction.amount.toFixed(2)} ${transaction.category ? `(${transaction.category})` : ''} <button onclick="deleteTransaction(${index})">Delete</button>`;
+        transactionsList.appendChild(listItem);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadTransactions();
+    updateBalance();
+    displayTransactions();
+});
